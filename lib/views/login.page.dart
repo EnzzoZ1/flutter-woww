@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -11,8 +14,68 @@ class LoginPage extends StatelessWidget {
   }
 }
 
-class BackgroundPage extends StatelessWidget {
+class BackgroundPage extends StatefulWidget {
   const BackgroundPage({super.key});
+
+  @override
+  _BackgroundPageState createState() => _BackgroundPageState();
+}
+
+class _BackgroundPageState extends State<BackgroundPage> {
+  final TextEditingController _cpfController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String? _errorMessage;
+
+  Future<void> _login() async {
+    try {
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: _cpfController.text,
+        password: _passwordController.text,
+      );
+
+      // Buscar dados do usuário na coleção 'usuarios'
+      DocumentSnapshot userDoc = await _firestore.collection('usuarios').doc(userCredential.user!.uid).get();
+
+      if (userDoc.exists) {
+        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+
+        // Armazenar a sessão do usuário no local storage
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        Map<String, dynamic> user = {
+          'id': userCredential.user!.uid,
+          'name': userData['name'],
+          'email': userData['email'],
+          'admin': userData['admin'],
+        };
+        await prefs.setString('user', user.toString());
+
+        Navigator.pushReplacementNamed(context, '/portal');
+      } else {
+        setState(() {
+          _errorMessage = 'Usuário não encontrado.';
+        });
+        _showErrorMessage();
+      }
+    } on FirebaseAuthException catch (err) {
+      setState(() {
+        _errorMessage = 'Login/Email incorretos. Tente novamente.';
+      });
+      _showErrorMessage();
+    }
+  }
+
+  void _showErrorMessage() {
+    if (_errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_errorMessage!),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,6 +134,7 @@ class BackgroundPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 TextField(
+                  controller: _cpfController,
                   decoration: InputDecoration(
                     labelText: 'CPF',
                     border: OutlineInputBorder(
@@ -80,6 +144,7 @@ class BackgroundPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 TextField(
+                  controller: _passwordController,
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: 'Senha',
@@ -102,11 +167,8 @@ class BackgroundPage extends StatelessWidget {
                 SizedBox(
                   width: double.infinity, // Make the button full width
                   child: ElevatedButton(
-                    style:
-                        ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/portal');
-                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                    onPressed: _login,
                     child: const Text(
                       'Acessar conta',
                       style: TextStyle(color: Colors.white),

@@ -6,36 +6,36 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
-class ServiceRegisterPage extends StatelessWidget {
+class ServiceUpdatePage extends StatelessWidget {
   final String item;
 
-  const ServiceRegisterPage({super.key, this.item = 'Outro'});
+  const ServiceUpdatePage({super.key, this.item = 'Outro'});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: ServiceRegistrationScreen(item: item),
+      home: ServiceUpdateScreen(item: item),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
-class ServiceRegistrationScreen extends StatefulWidget {
+class ServiceUpdateScreen extends StatefulWidget {
   final String item;
 
-  const ServiceRegistrationScreen({super.key, required this.item});
+  const ServiceUpdateScreen({super.key, required this.item});
 
   @override
-  _ServiceRegistrationScreenState createState() =>
-      _ServiceRegistrationScreenState();
+  _ServiceUpdateScreenState createState() => _ServiceUpdateScreenState();
 }
 
-class _ServiceRegistrationScreenState extends State<ServiceRegistrationScreen> {
+class _ServiceUpdateScreenState extends State<ServiceUpdateScreen> {
   File? selectedFile;
   Uint8List? selectedFileBytes;
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String? selectedStatus;
 
   // Função para escolher arquivo
   Future<void> _pickFile() async {
@@ -78,7 +78,7 @@ class _ServiceRegistrationScreenState extends State<ServiceRegistrationScreen> {
     }
   }
 
-  Future<void> _registerService() async {
+  Future<void> _updateService() async {
     try {
       String? imageUrl;
       if (selectedFile != null || selectedFileBytes != null) {
@@ -96,10 +96,9 @@ class _ServiceRegistrationScreenState extends State<ServiceRegistrationScreen> {
         imageUrl = await storageRef.getDownloadURL();
       }
 
-      // Enviar dados para o Firestore
-      await _firestore.collection('servicos').add({
-        'title': widget.item,
-        'status': 'Em andamento',
+      // Atualizar dados no Firestore
+      await _firestore.collection('servicos').doc(widget.item).update({
+        'status': selectedStatus,
         'location': _locationController.text,
         'description': _descriptionController.text,
         'imageUrl': imageUrl,
@@ -109,7 +108,7 @@ class _ServiceRegistrationScreenState extends State<ServiceRegistrationScreen> {
       // Mostrar mensagem de sucesso
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Serviço registrado com sucesso!'),
+          content: Text('Serviço atualizado com sucesso!'),
           backgroundColor: Colors.green,
         ),
       );
@@ -120,12 +119,13 @@ class _ServiceRegistrationScreenState extends State<ServiceRegistrationScreen> {
       setState(() {
         selectedFile = null;
         selectedFileBytes = null;
+        selectedStatus = null;
       });
     } catch (e) {
       // Mostrar mensagem de erro
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Erro ao registrar serviço: $e'),
+          content: Text('Erro ao atualizar serviço: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -327,15 +327,62 @@ class _ServiceRegistrationScreenState extends State<ServiceRegistrationScreen> {
                 else
                   const Text("Nenhum arquivo selecionado."),
                 const SizedBox(height: 16),
+                const Text(
+                  'Status',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          selectedStatus = 'Pendente';
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: selectedStatus == 'Pendente' ? Colors.red : Colors.grey,
+                      ),
+                      child: const Text('Pendente'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          selectedStatus = 'Em Andamento';
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: selectedStatus == 'Em Andamento' ? Colors.red : Colors.grey,
+                      ),
+                      child: const Text('Em Andamento'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          selectedStatus = 'Concluído';
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: selectedStatus == 'Concluído' ? Colors.red : Colors.grey,
+                      ),
+                      child: const Text('Concluído'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
                     ),
-                    onPressed: _registerService,
+                    onPressed: selectedStatus == null ? null : _updateService,
                     child: const Text(
-                      'Finalizar',
+                      'Salvar',
                       style: TextStyle(color: Colors.white),
                     ),
                   ),

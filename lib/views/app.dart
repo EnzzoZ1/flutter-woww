@@ -13,6 +13,7 @@ import 'admin.profile.dart';
 import 'user.info.dart';
 import 'historico.page.dart' ;
 import 'historico.teste.dart';
+import 'service.list.dart';
 
 class AjudaRPApp extends StatelessWidget {
   const AjudaRPApp({super.key});
@@ -35,6 +36,7 @@ class AjudaRPApp extends StatelessWidget {
         "/user-info": (context) => UserInfo(),
         "/historico": (context) => HistoricoPage(),
         "/historico-teste": (context) => UserTeste(),
+        "/list": (context) => ServiceListPage(),
       },
       initialRoute: "/home",
     );
