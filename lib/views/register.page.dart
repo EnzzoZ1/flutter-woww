@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 class RegisterPage extends StatelessWidget {
   const RegisterPage({super.key});
@@ -33,49 +35,87 @@ class _BackgroundPageState extends State<BackgroundPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String? _errorMessage;
 
- Future<void> _register() async {
-  try {
-    UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-      email: _emailController.text,
-      password: _passwordController.text,
-    );
+  // Crie um formatador para o CPF
+  final MaskTextInputFormatter _cpfFormatter = MaskTextInputFormatter(
+    mask: '###.###.###-##', // Máscara para CPF
+    filter: {
+      "#": RegExp(r'[0-9]'),
+    },
+  );
 
-    // Adicionar informações adicionais ao Firestore
-    await _firestore.collection('usuarios').doc(userCredential.user!.uid).set({
-      'cpf': _cpfController.text,
-      'name': _nameController.text,
-      'dob': _dobController.text,
-      'email': _emailController.text,
-      'phone': _phoneController.text,
-      'cep': _cepController.text,
-      'admin': false,
-    });
+  // Crie um formatador para o data de nascimento
+  final MaskTextInputFormatter _dataNascimentoFormatter =
+      MaskTextInputFormatter(
+    mask: '##/##/####', // Máscara para data de nascimento
+    filter: {
+      "#": RegExp(r'[0-9]'),
+    },
+  );
 
-    // Armazenar a sessão do usuário no local storage
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    Map<String, dynamic> user = {
-      'id': userCredential.user!.uid,
-      'name': _nameController.text,
-      'email': _emailController.text,
-      'admin': false,
-    };
-    await prefs.setString('user', user.toString());
+  // Crie um formatador para o telefone
+  final MaskTextInputFormatter _telefoneFormatter = MaskTextInputFormatter(
+    mask: '(##) #####-####', // Máscara para telefone
+    filter: {
+      "#": RegExp(r'[0-9]'),
+    },
+  );
 
-    Navigator.pushReplacementNamed(context, '/portal');
-  } on FirebaseAuthException catch (e) {
-    setState(() {
-      if (e.code == 'email-already-in-use') {
-        _errorMessage = 'Este email já está em uso.';
-      } else if (e.code == 'weak-password') {
-        _errorMessage = 'A senha é muito fraca.';
-      } else {
-        _errorMessage = 'Ocorreu um erro. Por favor, tente novamente.';
-      }
-    });
-    _showErrorMessage();
+  // Crie um formatador para o CEP
+  final MaskTextInputFormatter _cepFormatter = MaskTextInputFormatter(
+    mask: '#####-###', // Máscara para CEP
+    filter: {
+      "#": RegExp(r'[0-9]'),
+    },
+  );
+
+  Future<void> _register() async {
+    try {
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+
+      // Adicionar informações adicionais ao Firestore
+      await _firestore
+          .collection('usuarios')
+          .doc(userCredential.user!.uid)
+          .set({
+        'cpf': _cpfController.text,
+        'name': _nameController.text,
+        'dob': _dobController.text,
+        'email': _emailController.text,
+        'phone': _phoneController.text,
+        'cep': _cepController.text,
+        'admin': false,
+      });
+
+      // Armazenar a sessão do usuário no local storage
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      Map<String, dynamic> user = {
+        'id': userCredential.user!.uid,
+        'name': _nameController.text,
+        'email': _emailController.text,
+        'admin': false,
+      };
+      await prefs.setString('user', user.toString());
+
+      Navigator.pushReplacementNamed(context, '/portal');
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        if (e.code == 'email-already-in-use') {
+          _errorMessage = 'Este email já está em uso.';
+        } else if (e.code == 'weak-password') {
+          _errorMessage = 'A senha é muito fraca.';
+        } else {
+          _errorMessage = 'Ocorreu um erro. Por favor, tente novamente.';
+        }
+      });
+      _showErrorMessage();
+    }
   }
-}
- void _showErrorMessage() {
+
+  void _showErrorMessage() {
     if (_errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -144,13 +184,37 @@ class _BackgroundPageState extends State<BackgroundPage> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  _buildTextField('CPF', controller: _cpfController),
-                  _buildTextField('Nome Civil Completo', controller: _nameController),
-                  _buildTextField('Data de Nascimento', controller: _dobController, keyboardType: TextInputType.datetime),
-                  _buildTextField('Email', controller: _emailController, keyboardType: TextInputType.emailAddress),
-                  _buildTextField('Telefone', controller: _phoneController, keyboardType: TextInputType.phone),
-                  _buildTextField('CEP', controller: _cepController, keyboardType: TextInputType.number),
-                  _buildTextField('Senha', controller: _passwordController, obscureText: true),
+                  _buildTextField('CPF',
+                      controller: _cpfController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [_cpfFormatter],
+                      hintText: 'XXX.XXX.XXX-XX'),
+                  _buildTextField('Nome Civil Completo',
+                      controller: _nameController,
+                      hintText: 'Qual é seu nome completo'),
+                  _buildTextField('Data de Nascimento',
+                      controller: _dobController,
+                      keyboardType: TextInputType.datetime,
+                      inputFormatters: [_dataNascimentoFormatter],
+                      hintText: 'Dia/Mês/Ano'),
+                  _buildTextField('Email',
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      hintText: 'Informe seu e-mail'),
+                  _buildTextField('Telefone',
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: [_telefoneFormatter],
+                      hintText: '(XX) XXXXX-XXXX'),
+                  _buildTextField('CEP',
+                      controller: _cepController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [_cepFormatter],
+                      hintText: 'XXXXX-XXX'),
+                  _buildTextField('Senha',
+                      controller: _passwordController,
+                      obscureText: true,
+                      hintText: 'Senha'),
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
@@ -187,7 +251,9 @@ class _BackgroundPageState extends State<BackgroundPage> {
   Widget _buildTextField(String label,
       {bool obscureText = false,
       TextInputType keyboardType = TextInputType.text,
-      required TextEditingController controller}) {
+      required TextEditingController controller,
+      List<TextInputFormatter>? inputFormatters,
+      String? hintText}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -197,10 +263,12 @@ class _BackgroundPageState extends State<BackgroundPage> {
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
           decoration: InputDecoration(
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
             ),
+            hintText: hintText, // Use o hintText aqui
           ),
         ),
         const SizedBox(height: 10), // Space between fields

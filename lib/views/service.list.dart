@@ -25,7 +25,7 @@ class ServiceListScreen extends StatefulWidget {
 
 class _ServiceListScreenState extends State<ServiceListScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  bool isAdmin = true;
+  bool isAdmin = false;
   String userString = '';
 
   @override
@@ -422,6 +422,17 @@ class _ServiceUpdatePageState extends State<ServiceUpdatePage> {
                   ElevatedButton(
                     onPressed: () {
                       setState(() {
+                        selectedStatus = 'Cancelado';
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: selectedStatus == 'Cancelado' ? Colors.red : Colors.grey.withOpacity(0.5),
+                    ),
+                    child: const Text('Cancelado'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
                         selectedStatus = 'Pendente';
                       });
                     },
@@ -429,17 +440,6 @@ class _ServiceUpdatePageState extends State<ServiceUpdatePage> {
                       backgroundColor: selectedStatus == 'Pendente' ? Colors.red : Colors.grey.withOpacity(0.5),
                     ),
                     child: const Text('Pendente'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        selectedStatus = 'Em Andamento';
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: selectedStatus == 'Em Andamento' ? Colors.red : Colors.grey.withOpacity(0.5),
-                    ),
-                    child: const Text('Em Andamento'),
                   ),
                   ElevatedButton(
                     onPressed: () {
