@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -49,7 +50,7 @@ class _BackgroundPageState extends State<BackgroundPage> {
           'email': userData['email'],
           'admin': userData['admin'],
         };
-        await prefs.setString('user', user.toString());
+        await prefs.setString('user', jsonEncode(user));
 
         Navigator.pushReplacementNamed(context, '/portal');
       } else {
@@ -58,7 +59,7 @@ class _BackgroundPageState extends State<BackgroundPage> {
         });
         _showErrorMessage();
       }
-    } on FirebaseAuthException catch (err) {
+    } on FirebaseAuthException {
       setState(() {
         _errorMessage = 'Login/Email incorretos. Tente novamente.';
       });
@@ -136,7 +137,7 @@ class _BackgroundPageState extends State<BackgroundPage> {
                 TextField(
                   controller: _cpfController,
                   decoration: InputDecoration(
-                    labelText: 'CPF',
+                    labelText: 'Email',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),

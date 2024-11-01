@@ -26,6 +26,16 @@ class _ServicePageContentState extends State<ServicePageContent> {
   bool _showCategories = true;
 
   final Map<String, List<String>> _categories = {
+    "Rua e Bairro": [
+      "Buracos nas ruas",
+      "Calçadas danificadas",
+      "Esgoto a céu aberto",
+      "Mau cheiro de esgoto",
+      "Falta de sinalização nas vias",
+      "Falta de pavimentação",
+      "Obras inacabadas",
+      "Alagamento em dias de chuva"
+    ],
     "Água": [
       "Falta de água frequente",
       "Vazamento de água nas ruas",
@@ -96,16 +106,6 @@ class _ServicePageContentState extends State<ServicePageContent> {
       "Depredação de espaços públicos",
       "Arrombamentos em casas e comércios"
     ],
-    "Rua e Bairro": [
-      "Buracos nas ruas",
-      "Calçadas danificadas",
-      "Esgoto a céu aberto",
-      "Mau cheiro de esgoto",
-      "Falta de sinalização nas vias",
-      "Falta de pavimentação",
-      "Obras inacabadas",
-      "Alagamento em dias de chuva"
-    ]
   };
 
   void _updateCategory(String category) {

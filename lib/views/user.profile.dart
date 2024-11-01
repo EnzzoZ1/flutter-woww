@@ -99,7 +99,7 @@ class UserProfilePage extends StatelessWidget {
                     fixedSize: const Size(240, 80), // Tamanho fixo do botão
                   ),
                   onPressed: () {
-                    Navigator.pushNamed(context, '/aconpanhamento');
+                    Navigator.pushNamed(context, '/list');
                   },
                   child: const Text(
                     'Acompanhamento de Serviço',

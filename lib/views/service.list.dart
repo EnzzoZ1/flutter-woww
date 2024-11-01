@@ -26,6 +26,7 @@ class ServiceListScreen extends StatefulWidget {
 class _ServiceListScreenState extends State<ServiceListScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   bool isAdmin = true;
+  String userString = '';
 
   @override
   void initState() {
@@ -33,17 +34,24 @@ class _ServiceListScreenState extends State<ServiceListScreen> {
     _checkAdminStatus();
   }
 
-  Future<void> _checkAdminStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userString = prefs.getString('flutter.user');
+
+   Future<void> _checkAdminStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? userString = prefs.getString('user');
     if (userString != null) {
-      final user = Map<String, dynamic>.from(await jsonDecode(userString));
-      print(user);
-      setState(() {
-        isAdmin = user['admin'] ?? false;
-      });
+      userString = userString.replaceAll(RegExp(r'(\w+):'), r'"\1":').replaceAll("'", '"');
+   
+        Map<String, dynamic> user = jsonDecode(userString);
+        if (user.containsKey('admin')) {
+          bool isAdmin = user['admin'];
+          setState(() {
+            this.isAdmin = isAdmin;
+            this.userString = user.toString();
+          });
+        }
     }
   }
+
 
   void _navigateToServiceUpdatePage(String serviceId) {
     Navigator.push(
@@ -143,7 +151,7 @@ class _ServiceListScreenState extends State<ServiceListScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
                 Expanded(
                   child: StreamBuilder<QuerySnapshot>(
                     stream: _firestore.collection('servicos').snapshots(),
@@ -166,7 +174,7 @@ class _ServiceListScreenState extends State<ServiceListScreen> {
                             ],
                             rows: services.map((service) {
                               final data = service.data() as Map<String, dynamic>;
-                              final serviceTitle = data['description'] ?? 'Sem título';
+                              final serviceTitle = data['title'] ?? 'Sem título';
                               final serviceStatus = data['status'] ?? 'Em andamento';
                               final timestamp = data['timestamp'] as Timestamp;
                               final date = DateFormat('dd/MM/yyyy').format(timestamp.toDate());
@@ -189,20 +197,25 @@ class _ServiceListScreenState extends State<ServiceListScreen> {
                                 cells: [
                                   DataCell(
                                     Row(
-                                      children: [
-                                        if (imageUrl != null && imageUrl.isNotEmpty)
-                                          Image.network(
-                                            imageUrl,
-                                            width: 50,
-                                            height: 50,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) {
-                                              return const Icon(Icons.broken_image, size: 50);
-                                            },
-                                          ),
-                                        const SizedBox(width: 8),
-                                        Text(serviceTitle),
-                                      ],
+                                     children: [
+  if (imageUrl != null && imageUrl.isNotEmpty)
+    Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        image: DecorationImage(
+          image: NetworkImage(imageUrl),
+          fit: BoxFit.cover,
+          onError: (error, stackTrace) {
+            print('Erro ao carregar imagem: $error');
+          },
+        ),
+      ),
+    ),
+  const SizedBox(width: 8),
+  Text(serviceTitle),
+],
                                     ),
                                     onTap: isAdmin ? () => _navigateToServiceUpdatePage(serviceId) : null,
                                   ),
@@ -242,7 +255,6 @@ class _ServiceListScreenState extends State<ServiceListScreen> {
   }
 }
 
-
 class ServiceUpdatePage extends StatefulWidget {
   final String serviceId;
 
@@ -255,11 +267,36 @@ class ServiceUpdatePage extends StatefulWidget {
 class _ServiceUpdatePageState extends State<ServiceUpdatePage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String? selectedStatus;
+  String title = '';
+  String description = '';
+  String imageUrl = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadServiceData();
+  }
+
+  Future<void> _loadServiceData() async {
+    DocumentSnapshot serviceDoc = await _firestore.collection('servicos').doc(widget.serviceId).get();
+    if (serviceDoc.exists) {
+      Map<String, dynamic> serviceData = serviceDoc.data() as Map<String, dynamic>;
+      setState(() {
+        title = serviceData['title'] ?? '';
+        description = serviceData['description'] ?? '';
+        imageUrl = serviceData['imageUrl'] ?? '';
+        selectedStatus = serviceData['status'];
+      });
+    }
+  }
 
   Future<void> _updateService() async {
     try {
       // Atualizar dados no Firestore
       await _firestore.collection('servicos').doc(widget.serviceId).update({
+        'title': title,
+        'description': description,
+        'imageUrl': imageUrl,
         'status': selectedStatus,
         'timestamp': FieldValue.serverTimestamp(),
       });
@@ -287,11 +324,37 @@ class _ServiceUpdatePageState extends State<ServiceUpdatePage> {
     }
   }
 
+  Future<void> _deleteService() async {
+    try {
+      // Excluir dados no Firestore
+      await _firestore.collection('servicos').doc(widget.serviceId).delete();
+
+      // Mostrar mensagem de sucesso
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Serviço excluído com sucesso!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Navegar de volta para a lista de serviços
+      Navigator.pop(context);
+    } catch (e) {
+      // Mostrar mensagem de erro
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao excluir serviço: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.serviceId),
+        title: Text(title),
       ),
       body: Center(
         child: Container(
@@ -306,13 +369,43 @@ class _ServiceUpdatePageState extends State<ServiceUpdatePage> {
             children: [
               Center(
                 child: Text(
-                  widget.serviceId,
+                  title,
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
                   ),
                 ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                decoration: const InputDecoration(labelText: 'Título'),
+                onChanged: (value) {
+                  setState(() {
+                    title = value;
+                  });
+                },
+                controller: TextEditingController(text: title),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                decoration: const InputDecoration(labelText: 'Descrição'),
+                onChanged: (value) {
+                  setState(() {
+                    description = value;
+                  });
+                },
+                controller: TextEditingController(text: description),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                decoration: const InputDecoration(labelText: 'URL da Imagem'),
+                onChanged: (value) {
+                  setState(() {
+                    imageUrl = value;
+                  });
+                },
+                controller: TextEditingController(text: imageUrl),
               ),
               const SizedBox(height: 16),
               const Text(
@@ -333,7 +426,7 @@ class _ServiceUpdatePageState extends State<ServiceUpdatePage> {
                       });
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: selectedStatus == 'Pendente' ? Colors.red : Colors.grey,
+                      backgroundColor: selectedStatus == 'Pendente' ? Colors.red : Colors.grey.withOpacity(0.5),
                     ),
                     child: const Text('Pendente'),
                   ),
@@ -344,7 +437,7 @@ class _ServiceUpdatePageState extends State<ServiceUpdatePage> {
                       });
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: selectedStatus == 'Em Andamento' ? Colors.red : Colors.grey,
+                      backgroundColor: selectedStatus == 'Em Andamento' ? Colors.red : Colors.grey.withOpacity(0.5),
                     ),
                     child: const Text('Em Andamento'),
                   ),
@@ -355,7 +448,7 @@ class _ServiceUpdatePageState extends State<ServiceUpdatePage> {
                       });
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: selectedStatus == 'Concluído' ? Colors.red : Colors.grey,
+                      backgroundColor: selectedStatus == 'Concluído' ? Colors.red : Colors.grey.withOpacity(0.5),
                     ),
                     child: const Text('Concluído'),
                   ),
@@ -371,6 +464,20 @@ class _ServiceUpdatePageState extends State<ServiceUpdatePage> {
                   onPressed: selectedStatus == null ? null : _updateService,
                   child: const Text(
                     'Salvar',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                  ),
+                  onPressed: _deleteService,
+                  child: const Text(
+                    'Excluir',
                     style: TextStyle(color: Colors.white),
                   ),
                 ),

@@ -89,7 +89,7 @@ class ServicePortalPage extends StatelessWidget {
                         child: Text(
                           'Portal de Atendimento',
                           style: TextStyle(
-                              fontSize: 24, fontWeight: FontWeight.bold),
+                              color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
                         ),
                       ),
                       // White square with opacity
@@ -101,60 +101,84 @@ class ServicePortalPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Column(
-                          children: [
+                          children: [ 
                             const Text(
                               'Principais Serviços',
                               style: TextStyle(
-                                  fontSize: 20, fontWeight: FontWeight.bold),
+                                  fontSize: 25, fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 20),
                             // Service icons
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
-                                _buildServiceIcon(Icons.house, 'IPTU'),
-                                _buildServiceIcon(Icons.money, 'IPVA'),
-                                _buildServiceIcon(Icons.money, 'Árvore'),
+                                _buildServiceIcon(Icons.add_road_rounded, 'Bairro', () {
+                                  Navigator.pushNamed(context, '/service');
+                                }),
+                                _buildServiceIcon(Icons.house, 'IPVA', () {
+                                  Navigator.pushNamed(context, '/service');
+                                }),
+                                _buildServiceIcon(Icons.trending_neutral, 'Árvore', () {
+                                  Navigator.pushNamed(context, '/service');
+                                }),
                               ],
                             ),
                             const SizedBox(height: 10),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
-                                _buildServiceIcon(
-                                    Icons.cleaning_services, 'Coleta'),
-                                _buildServiceIcon(Icons.pets, 'Animais'),
-                                _buildServiceIcon(
-                                    Icons.roofing, 'Pavimentação'),
+                                _buildServiceIcon(Icons.cleaning_services, 'Coleta', () {
+                                  Navigator.pushNamed(context, '/service');
+                                }),
+                                _buildServiceIcon(Icons.pets, 'Animais', () {
+                                  Navigator.pushNamed(context, '/service');
+                                }),
+                                _buildServiceIcon(Icons.roofing, 'IPTU', () {
+                                  Navigator.pushNamed(context, '/service');
+                                }),
                               ],
                             ),
                             const SizedBox(height: 10),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
-                                _buildServiceIcon(Icons.traffic, 'Esgoto'),
-                                _buildServiceIcon(Icons.traffic, 'Trânsito'),
-                                _buildServiceIcon(
-                                    Icons.directions_bus, 'Ônibus'),
+                                _buildServiceIcon(Icons.traffic, 'Esgoto', () {
+                                  Navigator.pushNamed(context, '/service');
+                                }),
+                                _buildServiceIcon(Icons.traffic, 'Trânsito', () {
+                                  Navigator.pushNamed(context, '/service');
+                                }),
+                                _buildServiceIcon(Icons.directions_bus, 'Ônibus', () {
+                                  Navigator.pushNamed(context, '/service');
+                                }),
                               ],
                             ),
-                            const SizedBox(height: 20),
-                            ElevatedButton(
-                              onPressed: () {
-                                // Service page action
-                                Navigator.pushNamed(
-                                    context, '/service-register'); // Ensure this matches your routes
-                              },
-                              child: const Text('Cadastro do Serviços'),
-                            ),
-                            const SizedBox(height: 20),
-                            ElevatedButton(
-                              onPressed: () {
-                                Navigator.pushNamed(
-                                    context, '/service'); // Ensure this matches your routes
-                              },
-                              child: const Text('Opções de Serviços'),
-                            ),
+                         const SizedBox(height: 20),
+                            // const SizedBox(height: 20),
+                            // ElevatedButton(
+                            //   onPressed: () {
+                            //     // Service page action
+                            //     Navigator.pushNamed(
+                            //         context, '/service-register'); // Ensure this matches your routes
+                            //   },
+                            //   child: const Text('Cadastro do Serviços'),
+                            // ),
+                            // const SizedBox(height: 20),
+                            // ElevatedButton(
+                            //   onPressed: () {
+                            //     Navigator.pushNamed(
+                            //         context, '/service'); // Ensure this matches your routes
+                            //   },
+                            //   child: const Text('Opções de Serviços'),
+                            // ),
+                            // const SizedBox(height: 20),
+                            // ElevatedButton(
+                            //   onPressed: () {
+                            //     Navigator.pushNamed(
+                            //         context, '/list'); // Ensure this matches your routes
+                            //   },
+                            //   child: const Text('Lista de Serviços'),
+                            // ),   // 
                             // SizedBox(height: 20),
                             // ElevatedButton(
                             //   onPressed: () {
@@ -162,46 +186,6 @@ class ServicePortalPage extends StatelessWidget {
                             //         context, '/notices'); // Ensure this matches your routes
                             //   },
                             //   child: const Text('Notícias Sobre Serviços'),
-                            // ),
-                            // SizedBox(height: 20),
-                            // ElevatedButton(
-                            //   onPressed: () {
-                            //     Navigator.pushNamed(
-                            //         context, '/admin-profile'); // Ensure this matches your routes
-                            //   },
-                            //   child: const Text('Tela do Admin'),
-                            // ),
-                            // SizedBox(height: 20),
-                            // ElevatedButton(
-                            //   onPressed: () {
-                            //     Navigator.pushNamed(
-                            //         context, '/login'); // Ensure this matches your routes
-                            //   },
-                            //   child: const Text('Login'),
-                            // ),
-                            // SizedBox(height: 20),
-                            // ElevatedButton(
-                            //   onPressed: () {
-                            //     Navigator.pushNamed(
-                            //         context, '/user-info'); // Ensure this matches your routes
-                            //   },
-                            //   child: const Text('user-edit'),
-                            // ),
-                            // SizedBox(height: 20),
-                            // ElevatedButton(
-                            //   onPressed: () {
-                            //     Navigator.pushNamed(
-                            //         context, '/historico'); // Ensure this matches your routes
-                            //   },
-                            //   child: const Text('Histórico de Solicitações'),
-                            // ),
-                            // SizedBox(height: 20),
-                            // ElevatedButton(
-                            //   onPressed: () {
-                            //     Navigator.pushNamed(
-                            //         context, '/historico-teste'); // Ensure this matches your routes
-                            //   },
-                            //   child: const Text('User Teste'),
                             // ),
                           ],
                         ),
@@ -218,19 +202,27 @@ class ServicePortalPage extends StatelessWidget {
   }
 
   // Widget for service icons
-  Widget _buildServiceIcon(IconData icon, String label) {
-    return Column(
+  Widget _buildServiceIcon(IconData icon, String label, [VoidCallback? onTap]) {
+  return Center(
+    child: Column(
       children: [
-        CircleAvatar(
-          radius: 30,
-          backgroundColor: Colors.red.shade200,
-          child: Icon(icon, color: Colors.white),
+        GestureDetector(
+          onTap: onTap,
+          child: CircleAvatar(
+            radius: 25,
+            backgroundColor: Colors.red.shade200,
+            child: Icon(icon, color: Colors.white),
+          ),
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 10),
         Text(label),
       ],
-    );
-  }
+    ),
+  );
+}
+
+
+
 }
 
 // void main() {
